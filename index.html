@@ -281,6 +281,7 @@
         <div class="row" style="margin-bottom:10px">
           <div class="muted">Loaded loans: <span id="portfolioCount">0</span></div>
         </div>
+        <div class="grid" id="portfolioSummary" style="margin-bottom:10px"></div>
         <div style="overflow:auto; max-height:65vh; border:1px solid var(--border); border-radius:12px">
           <table id="portfolioTable">
             <thead>
@@ -348,6 +349,19 @@
     return (Math.round(val*10000)/100) + '%';
   };
   const months = (n)=> (n==null||isNaN(+n))? '' : String(n);
+  const avg = arr => arr.length ? sum(arr)/arr.length : 0;
+  const parseAmount = s => {
+    if(!s) return 0;
+    const n = parseFloat(String(s).replace(/[^0-9.-]/g,''));
+    return isNaN(n) ? 0 : n;
+  };
+  const parseRate = s => {
+    if(!s) return null;
+    const n = parseFloat(String(s).replace(/[^0-9.-]/g,''));
+    if(isNaN(n)) return null;
+    return n > 1 ? n/100 : n;
+  };
+  const fmtCurrency = n => n ? '$' + n.toLocaleString(undefined, {maximumFractionDigits:0}) : '—';
 
   function download(filename, text){
     const a = document.createElement('a');
@@ -944,9 +958,15 @@
   function renderPortfolio(){
     const tbody = $('#portfolioTable tbody'); if(!tbody) return;
     $('#portfolioCount').textContent = LOANS.length;
+    const summaryEl = $('#portfolioSummary');
+    let totalFacility = 0;
+    const rates = [];
     tbody.innerHTML = '';
     for(const L of LOANS){
       const T = L.terms || {};
+      totalFacility += parseAmount(T.facility_amount);
+      const r = parseRate(T.interest_rate);
+      if(r!=null) rates.push(r);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><div class="row" style="gap:8px; align-items:center">
@@ -967,6 +987,13 @@
         <td class="num">${L.meta?.bespoke ?? ''}</td>
         <td class="num">${L.meta?.itemsCount ?? ''}</td>`;
       tbody.appendChild(tr);
+    }
+    if(summaryEl){
+      const avgRate = rates.length ? avg(rates) : null;
+      summaryEl.innerHTML = `
+        <div class="kv"><div class="k">Total Facility</div><div class="v">${fmtCurrency(totalFacility)}</div></div>
+        <div class="kv"><div class="k">Avg Interest Rate</div><div class="v">${avgRate!=null ? pct(avgRate) : '—'}</div></div>
+      `;
     }
     // Activate row open buttons
     $$('#portfolioTable [data-goto]').forEach(btn=>{
