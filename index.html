@@ -281,6 +281,7 @@
         <div class="row" style="margin-bottom:10px">
           <div class="muted">Loaded loans: <span id="portfolioCount">0</span></div>
         </div>
+        <div id="portfolioSummary" class="glance" style="margin-bottom:12px"></div>
         <div style="overflow:auto; max-height:65vh; border:1px solid var(--border); border-radius:12px">
           <table id="portfolioTable">
             <thead>
@@ -542,7 +543,9 @@
       borrower: partyByRole('borrower'),
       lender: partyByRole('lender') || partyByRole('administrative agent') || partyByRole('lender agent'),
       facility_amount: formatMoney(principal.amount_number, principal.amount_currency),
+      facility_amount_num: principal.amount_number,
       interest_rate: (rateItem && rateItem._norm)? rateString(rateItem._norm) : '',
+      interest_rate_num: rateItem? rateItem._norm?.percent_decimal : undefined,
       io_months: io? months(io._norm?.duration_months) : '',
       amort_months: amort? months(amort._norm?.duration_months) : '',
       maturity_date: maturity? (maturity._norm?.date_iso || '') : (doc.maturity_date_iso || ''),
@@ -975,6 +978,33 @@
         window.scrollTo({top:0, behavior:'smooth'});
       };
     });
+    renderPortfolioSummary();
+  }
+
+  function renderPortfolioSummary(){
+    const wrap = $('#portfolioSummary'); if(!wrap) return;
+    if(!LOANS.length){ wrap.innerHTML = ''; return; }
+    let totalFacility = 0, rateSum = 0, rateCount = 0, bespokeTotal = 0;
+    for(const L of LOANS){
+      const T = L.terms || {};
+      if(T.facility_amount_num != null && !isNaN(T.facility_amount_num)) totalFacility += +T.facility_amount_num;
+      if(T.interest_rate_num != null && !isNaN(T.interest_rate_num)){ rateSum += +T.interest_rate_num; rateCount++; }
+      bespokeTotal += L.meta?.bespoke || 0;
+    }
+    const avgRate = rateCount ? rateSum / rateCount : null;
+    wrap.innerHTML = `
+      <div class="panel" style="background:#0e1533">
+        <h3>Total Facility</h3>
+        <div class="num">${formatMoney(totalFacility)}</div>
+      </div>
+      <div class="panel" style="background:#0e1533">
+        <h3>Average Rate</h3>
+        <div class="num">${avgRate!=null ? pct(avgRate) : ''}</div>
+      </div>
+      <div class="panel" style="background:#0e1533">
+        <h3>Bespoke Items</h3>
+        <div class="num">${bespokeTotal}</div>
+      </div>`;
   }
 
   // ---------- Tabs ----------
