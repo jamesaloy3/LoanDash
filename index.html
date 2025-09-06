@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Loan Agreement JSON Dashboard — Multi & Portfolio (Fixed)</title>
+  <title>Loan Agreement JSON Dashboard</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -111,6 +111,7 @@
         </label>
         <button class="btn" id="pasteBtn" title="Paste raw JSON">📋 Paste JSON</button>
         <button class="btn" id="saveHtmlBtn" title="Download this dashboard file">💾 Save Dashboard</button>
+        <a class="btn" href="PromptV2.txt" target="_blank" title="View JSON prompt">📝 Prompt</a>
         <button class="btn ghost" id="exportCsvBtn" disabled>⬇️ Export Items CSV</button>
         <button class="btn ghost" id="exportTermCsvBtn" disabled>⬇️ Export Term Sheet CSV</button>
         <button class="btn ghost" id="exportPortfolioCsvBtn" disabled>⬇️ Export Portfolio CSV</button>
@@ -1033,7 +1034,7 @@
   // Save the current HTML file for portability
   $('#saveHtmlBtn').onclick = ()=>{
     const html = document.documentElement.outerHTML;
-    download('loan_dashboard_multi_portfolio_fixed.html', html);
+    download('index.html', html);
   };
 
   // ---------- Boot ----------
