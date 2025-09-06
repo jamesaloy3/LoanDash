@@ -1,0 +1,547 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loan Agreement Extraction",
+  "type": "object",
+  "required": [
+    "document",
+    "chunks",
+    "items"
+  ],
+  "properties": {
+    "document": {
+      "$ref": "#/$defs/document"
+    },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/chunk"
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    },
+    "highlights": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/highlight"
+      },
+      "default": []
+    },
+    "qc": {
+      "$ref": "#/$defs/qc"
+    }
+  },
+  "$defs": {
+    "party": {
+      "type": "object",
+      "required": [
+        "name",
+        "role"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "required": [
+        "source_name",
+        "page_count"
+      ],
+      "properties": {
+        "title_guess": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_name": {
+          "type": "string"
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "effective_date_iso": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "maturity_date_iso": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "governing_law": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "principal_amount": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]{3}$"
+        },
+        "parties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/party"
+          },
+          "default": []
+        }
+      }
+    },
+    "citation": {
+      "type": "object",
+      "required": [
+        "page_start",
+        "page_end",
+        "verbatim_quote"
+      ],
+      "properties": {
+        "chunk_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "page_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verbatim_quote": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "variable": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "example_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "units": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "chunk": {
+      "type": "object",
+      "required": [
+        "chunk_id",
+        "title",
+        "page_start",
+        "page_end",
+        "heading_path",
+        "anchor_quote"
+      ],
+      "properties": {
+        "chunk_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "page_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "heading_path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "anchor_quote": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "required": [
+        "boilerplate_status",
+        "rationale"
+      ],
+      "properties": {
+        "boilerplate_status": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": "string"
+        }
+      }
+    },
+    "normalization": {
+      "type": "object",
+      "properties": {
+        "amount_number": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "amount_currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]{3}$"
+        },
+        "percent_decimal": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "rate_basis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date_iso": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "duration_months": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "frequency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "comparator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "threshold_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "units": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "original_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "test_details": {
+      "type": "object",
+      "properties": {
+        "formula_infix": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variable"
+          },
+          "default": []
+        },
+        "threshold": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "comparator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "testing_frequency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "test_window": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lookback": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "grace_cure_days": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "combined_debt": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "who_tests": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "who_enforces": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "related_note_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "substance": {
+      "type": "object",
+      "properties": {
+        "metric_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parties_involved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "timing": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "remedies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "baskets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "carve_outs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "cure_rights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "test_details": {
+          "$ref": "#/$defs/test_details"
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "title",
+        "classification",
+        "citations"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/citation"
+          },
+          "minItems": 1
+        },
+        "classification": {
+          "$ref": "#/$defs/classification"
+        },
+        "normalization": {
+          "$ref": "#/$defs/normalization"
+        },
+        "substance": {
+          "$ref": "#/$defs/substance"
+        }
+      }
+    },
+    "highlight": {
+      "type": "object",
+      "required": [
+        "item_id",
+        "why_notable"
+      ],
+      "properties": {
+        "item_id": {
+          "type": "string"
+        },
+        "why_notable": {
+          "type": "string"
+        }
+      }
+    },
+    "qc": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "duplicate_item_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "unknown_chunk_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "empty_required_field_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "item_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "citation_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}
