@@ -336,16 +336,8 @@
   // ---------- Utilities ----------
   const $ = (sel, el=document) => el.querySelector(sel);
   const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
-  const escapeHTML = (s) => (s==null?\"\":String(s))
-    .replace(/[&<>\"']/g, (c) => {
-      const map = {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\\'':'&#39;'};
-      return map[c] || c;
-    });
-  // Fix single-quote mapping (above line had an escape issue in earlier build)
-  // Re-define cleanly:
-  (function(){ const map = {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}; 
-    window.escapeHTML = (s)=> (s==null?\"\":String(s)).replace(/[&<>\"']/g, (c)=> map[c] || c);
-  })();
+  const escapeHTML = (s) => (s==null?"":String(s))
+    .replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] || c));
 
   const pretty = (v) => escapeHTML(typeof v==='object' ? JSON.stringify(v, null, 2) : (v ?? ''));
   const sum = (arr)=> arr.reduce((a,b)=> a+(+b||0),0);
@@ -364,25 +356,25 @@
     a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
   function toCSV(rows){
-    const esc = (v)=> '\"' + String(v ?? '').replace(/\"/g,'\"\"') + '\"';
+    const esc = (v)=> '"' + String(v ?? '').replace(/"/g,'""') + '"';
     return rows.map(r=> r.map(esc).join(',')).join('\\n');
   }
   const CATEGORY_ENUM = [
-    \"Definition\",\"MonetaryTerm\",\"InterestRate\",\"Amortization\",\"InterestOnly\",
-    \"Prepayment\",\"Fee\",\"ReserveEscrow\",
-    \"FinancialCovenant\",\"AffirmativeCovenant\",\"NegativeCovenant\",\"InformationCovenant\",
-    \"Reporting\",\"Calculation\",\"EventOfDefault\",\"Remedy\",
-    \"Guaranty\",\"Collateral\",\"TransferAssignment\",\"TaxGrossUp\",
-    \"Insurance\",\"Indemnity\",\"WaiverConsent\",\"Notice\",\"LegalProvision\",\"Other\"
+    "Definition","MonetaryTerm","InterestRate","Amortization","InterestOnly",
+    "Prepayment","Fee","ReserveEscrow",
+    "FinancialCovenant","AffirmativeCovenant","NegativeCovenant","InformationCovenant",
+    "Reporting","Calculation","EventOfDefault","Remedy",
+    "Guaranty","Collateral","TransferAssignment","TaxGrossUp",
+    "Insurance","Indemnity","WaiverConsent","Notice","LegalProvision","Other"
   ];
   const TAG_ENUM = [
-    \"Term\",\"Covenant\",\"Penalty\",\"Requirement\",\"Calculation\",\"Fee\",\"EventOfDefault\",\"Remedy\",\"Restriction\",\"Threshold\",\"Basket\",\"CarveOut\",\"Trigger\",\"Cure\",\"Timing\",\"Rate\",\"Amount\",\"Date\",\"Party\",\"Collateral\",\"Reporting\"
+    "Term","Covenant","Penalty","Requirement","Calculation","Fee","EventOfDefault","Remedy","Restriction","Threshold","Basket","CarveOut","Trigger","Cure","Timing","Rate","Amount","Date","Party","Collateral","Reporting"
   ];
 
   // ---------- State (multi-loan) ----------
   let LOANS = [];       // [{id, name, raw, items, chunks, doc, meta, terms}]
   let ACTIVE = null;    // id of active loan
-  let FILTER = {q:\"\", cats:new Set(), tags:new Set(), bespokeOnly:false, boilerOnly:false, minCites:1};
+  let FILTER = {q:"", cats:new Set(), tags:new Set(), bespokeOnly:false, boilerOnly:false, minCites:1};
   let PAGINATION = {page:1, per:50, filtered:[]};
   let ITEMS = [];       // active loan's items
 
@@ -625,7 +617,7 @@
     $('#rawJson').value = JSON.stringify(L.raw, null, 2);
 
     // Document meta
-    $('#docSource').innerHTML = `<span class=\"pill\">${escapeHTML(doc.source_name ?? '—')}</span>`;
+    $('#docSource').innerHTML = `<span class="pill">${escapeHTML(doc.source_name ?? '—')}</span>`;
     $('#docTitle').textContent = doc.title_guess || L.name || '—';
     $('#docEff').textContent = doc.effective_date_iso || '—';
     $('#docLaw').textContent = doc.governing_law || '—';
@@ -636,8 +628,8 @@
 
     const parties = Array.isArray(doc.parties) ? doc.parties : [];
     $('#metaParties').textContent = parties.length;
-    const chips = parties.map(p=> `<span class=\"chip\">${escapeHTML(p.role || 'Role')} — <strong>${escapeHTML(p.name || '?')}</strong></span>`).join(' ');
-    $('#docParties').innerHTML = chips || '<span class=\"muted\">—</span>';
+    const chips = parties.map(p=> `<span class="chip">${escapeHTML(p.role || 'Role')} — <strong>${escapeHTML(p.name || '?')}</strong></span>`).join(' ');
+    $('#docParties').innerHTML = chips || '<span class="muted">—</span>';
 
     // Chunks
     $('#metaChunks').textContent = Array.isArray(L.chunks)? L.chunks.length : 0;
@@ -696,7 +688,7 @@
   $('#boilerplateOnly').addEventListener('change', (e)=>{ FILTER.boilerOnly = e.target.checked; if(FILTER.boilerOnly) { $('#bespokeOnly').checked=false; FILTER.bespokeOnly=false; } PAGINATION.page=1; applyFilters(); });
   $('#minCites').addEventListener('input', (e)=>{ const v = parseInt(e.target.value||'1',10); FILTER.minCites = isNaN(v)?1:Math.max(0,v); PAGINATION.page=1; applyFilters(); });
   $('#resetFilters').onclick = ()=>{
-    FILTER = {q:\"\", cats:new Set(), tags:new Set(), bespokeOnly:false, boilerOnly:false, minCites:1};
+    FILTER = {q:"", cats:new Set(), tags:new Set(), bespokeOnly:false, boilerOnly:false, minCites:1};
     $('#searchInput').value=''; $('#categorySelect').selectedIndex=-1; $('#tagsSelect').selectedIndex=-1; $('#bespokeOnly').checked=false; $('#boilerplateOnly').checked=false; $('#minCites').value='1'; PAGINATION.page=1; applyFilters();
   };
 
@@ -715,8 +707,8 @@
       if(cats.size && !cats.has(i.category)) return false;
       if(tags.size && !i._tags.some(t=> tags.has(t))) return false;
       const status = i.classification?.boilerplate_status;
-      if(bespokeOnly && status!==\"bespoke\") return false;
-      if(boilerOnly && status!==\"boilerplate\") return false;
+      if(bespokeOnly && status!=="bespoke") return false;
+      if(boilerOnly && status!=="boilerplate") return false;
       if(q){
         const hay = [i.id,i.title,i._summary,status, (i.classification?.rationale||''), ...i._tags, JSON.stringify(i.substance||{}), JSON.stringify(i.calculation_detail||{}), JSON.stringify(i.citations||[]) ].join(' ').toLowerCase();
         if(!hay.includes(q)) return false;
@@ -744,15 +736,15 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><code>${escapeHTML(i.id||'')}</code></td>
-        <td><span class=\"badge\">${escapeHTML(i.category||'')}</span></td>
+        <td><span class="badge">${escapeHTML(i.category||'')}</span></td>
         <td>${escapeHTML(i.title||'')}</td>
         <td>${renderStatus(i.classification)}</td>
-        <td>${(i._tags||[]).map(t=>`<span class=\"chip\">${escapeHTML(t)}</span>`).join(' ')}</td>
+        <td>${(i._tags||[]).map(t=>`<span class="chip">${escapeHTML(t)}</span>`).join(' ')}</td>
         <td>${renderNorm(i._norm)}</td>
         <td>${i._citesCount ?? 0}</td>
         <td>
-          <button class=\"btn small\" data-act=\"expand\">Details</button>
-          <button class=\"btn small ghost\" data-act=\"copy\">Copy JSON</button>
+          <button class="btn small" data-act="expand">Details</button>
+          <button class="btn small ghost" data-act="copy">Copy JSON</button>
         </td>`;
 
       // Expandable row
@@ -781,10 +773,10 @@
 
   function renderStatus(cls){
     const st = cls?.boilerplate_status; const rationale = escapeHTML(cls?.rationale || '');
-    if(st==='bespoke') return `<span class=\"badge bespoke\">bespoke</span>`;
-    if(st==='boilerplate') return `<span class=\"badge bp\">boilerplate</span>`;
-    if(st==='unsure') return `<span class=\"badge\">unsure</span>`;
-    return `<span class=\"badge\">—</span>`;
+    if(st==='bespoke') return `<span class="badge bespoke">bespoke</span>`;
+    if(st==='boilerplate') return `<span class="badge bp">boilerplate</span>`;
+    if(st==='unsure') return `<span class="badge">unsure</span>`;
+    return `<span class="badge">—</span>`;
   }
 
   function renderNorm(n){
@@ -801,12 +793,12 @@
   }
 
   function renderCitations(cites){
-    if(!Array.isArray(cites) || !cites.length) return '<span class=\"muted\">(no citations)</span>';
+    if(!Array.isArray(cites) || !cites.length) return '<span class="muted">(no citations)</span>';
     return cites.map(c=>{
       const p = `p.${c.page_start}${c.page_end && c.page_end!==c.page_start ? '–'+c.page_end:''}`;
       return `<details>
-        <summary><span class=\"badge\">${escapeHTML(p)}</span> ${c.chunk_id? `<code>${escapeHTML(c.chunk_id)}</code>`:''}</summary>
-        <div class=\"quote\">${escapeHTML(c.verbatim_quote||'')}</div>
+        <summary><span class="badge">${escapeHTML(p)}</span> ${c.chunk_id? `<code>${escapeHTML(c.chunk_id)}</code>`:''}</summary>
+        <div class="quote">${escapeHTML(c.verbatim_quote||'')}</div>
       </details>`;
     }).join('');
   }
@@ -815,18 +807,18 @@
     const cls = i.classification || {}; const norm = i._norm || {};
     const sub = i.substance || {}; const calc = i.calculation_detail || {};
     return `
-      <div class=\"grid\" style=\"gap:12px\">
-        <div class=\"row\" style=\"flex-wrap:wrap; gap:8px\">
-          <span class=\"badge\">${escapeHTML(i.category||'')}</span>
+      <div class="grid" style="gap:12px">
+        <div class="row" style="flex-wrap:wrap; gap:8px">
+          <span class="badge">${escapeHTML(i.category||'')}</span>
           ${renderStatus(cls)}
-          ${(i._tags||[]).map(t=> `<span class=\"chip\">${escapeHTML(t)}</span>`).join(' ')}
+          ${(i._tags||[]).map(t=> `<span class="chip">${escapeHTML(t)}</span>`).join(' ')}
         </div>
         ${i._summary? `<div><h3>Summary</h3><div>${escapeHTML(i._summary)}</div></div>`:''}
-        <div class=\"grid\" style=\"grid-template-columns: repeat(3,1fr); gap:12px\">
+        <div class="grid" style="grid-template-columns: repeat(3,1fr); gap:12px">
           <div>
             <h3>Classification</h3>
             <div>status: <strong>${escapeHTML(cls.boilerplate_status||'—')}</strong></div>
-            <div class=\"muted\">${escapeHTML(cls.rationale||'')}</div>
+            <div class="muted">${escapeHTML(cls.rationale||'')}</div>
           </div>
           <div>
             <h3>Normalization</h3>
@@ -834,7 +826,7 @@
           </div>
           <div>
             <h3>Parties</h3>
-            <div>${Array.isArray(sub.parties_involved)? sub.parties_involved.map(p=>`<span class=\"chip\">${escapeHTML(p)}</span>`).join(' ') : '<span class=\"muted\">—</span>'}</div>
+            <div>${Array.isArray(sub.parties_involved)? sub.parties_involved.map(p=>`<span class="chip">${escapeHTML(p)}</span>`).join(' ') : '<span class="muted">—</span>'}</div>
           </div>
         </div>
         ${renderTest(sub)}
@@ -852,15 +844,15 @@
     return `<div>
       <h3>Test / Formula</h3>
       <div><strong>Formula</strong>: <code>${escapeHTML(t.formula_infix||'')}</code></div>
-      <div class=\"grid\" style=\"grid-template-columns: repeat(2,1fr); gap:10px; margin-top:6px\">
+      <div class="grid" style="grid-template-columns: repeat(2,1fr); gap:10px; margin-top:6px">
         <div>
           <h3>Variables</h3>
-          ${vars.length? vars.map(v=> `<div class=\"chip\">${escapeHTML(v.name)}${v.definition? ' — '+escapeHTML(v.definition):''}${v.units? ' ['+escapeHTML(v.units)+']':''}</div>`).join(' ') : '<span class=\"muted\">—</span>'}
+          ${vars.length? vars.map(v=> `<div class="chip">${escapeHTML(v.name)}${v.definition? ' — '+escapeHTML(v.definition):''}${v.units? ' ['+escapeHTML(v.units)+']':''}</div>`).join(' ') : '<span class="muted">—</span>'}
         </div>
         <div>
           <h3>Threshold</h3>
           <div>${t.comparator? escapeHTML(t.comparator)+' ':''}${t.threshold ?? ''}</div>
-          <div class=\"muted\">Testing: ${escapeHTML(t.testing_frequency||'—')}</div>
+          <div class="muted">Testing: ${escapeHTML(t.testing_frequency||'—')}</div>
         </div>
       </div>
     </div>`;
@@ -874,25 +866,25 @@
       <h3>Calculation Detail</h3>
       <div><strong>${escapeHTML(calc.name||'')}</strong></div>
       ${calc.formula_infix? `<div>Formula: <code>${escapeHTML(calc.formula_infix)}</code></div>`:''}
-      <div style=\"margin-top:6px\"><strong>Variables</strong>: ${vars.length? vars.map(v=> `<span class=\"chip\">${escapeHTML(v.name)}${v.definition? ' — '+escapeHTML(v.definition):''}${v.units? ' ['+escapeHTML(v.units)+']':''}${(v.example_value!=null)? ' = '+escapeHTML(v.example_value):''}</span>`).join(' ') : '<span class=\"muted\">—</span>'}</div>
-      ${Object.keys(w).length? `<details style=\"margin-top:8px\"><summary>Worked Example</summary><pre class=\"quote\" style=\"max-height:50vh; overflow:auto\">${escapeHTML(JSON.stringify(w, null, 2))}</pre></details>`:''}
+      <div style="margin-top:6px"><strong>Variables</strong>: ${vars.length? vars.map(v=> `<span class="chip">${escapeHTML(v.name)}${v.definition? ' — '+escapeHTML(v.definition):''}${v.units? ' ['+escapeHTML(v.units)+']':''}${(v.example_value!=null)? ' = '+escapeHTML(v.example_value):''}</span>`).join(' ') : '<span class="muted">—</span>'}</div>
+      ${Object.keys(w).length? `<details style="margin-top:8px"><summary>Worked Example</summary><pre class="quote" style="max-height:50vh; overflow:auto">${escapeHTML(JSON.stringify(w, null, 2))}</pre></details>`:''}
     </div>`;
   }
 
   // ---------- Chunks ----------
   function renderChunks(chunks){
     const list = $('#chunksList'); list.innerHTML='';
-    if(!Array.isArray(chunks) || !chunks.length){ list.innerHTML = '<div class=\"muted\">No chunks</div>'; return; }
+    if(!Array.isArray(chunks) || !chunks.length){ list.innerHTML = '<div class="muted">No chunks</div>'; return; }
     for(const c of chunks){
       const card = document.createElement('div'); card.className='panel'; card.style.background='#0e1533';
       card.innerHTML = `
-        <div class=\"row\" style=\"flex-wrap:wrap; gap:8px\">
-          <span class=\"badge\">${escapeHTML(c.chunk_id||'')}</span>
-          <span class=\"chip\">${escapeHTML(c.title||'')}</span>
-          <span class=\"pill\">p.${escapeHTML(c.page_start)}–${escapeHTML(c.page_end)}</span>
+        <div class="row" style="flex-wrap:wrap; gap:8px">
+          <span class="badge">${escapeHTML(c.chunk_id||'')}</span>
+          <span class="chip">${escapeHTML(c.title||'')}</span>
+          <span class="pill">p.${escapeHTML(c.page_start)}–${escapeHTML(c.page_end)}</span>
         </div>
-        <div class=\"muted\" style=\"margin-top:6px\">${Array.isArray(c.heading_path)? c.heading_path.map(h=> `<span class=\"chip\">${escapeHTML(h)}</span>`).join(' ') : ''}</div>
-        <div class=\"quote\" style=\"margin-top:8px\">${escapeHTML(c.anchor_quote||'')}</div>
+        <div class="muted" style="margin-top:6px">${Array.isArray(c.heading_path)? c.heading_path.map(h=> `<span class="chip">${escapeHTML(h)}</span>`).join(' ') : ''}</div>
+        <div class="quote" style="margin-top:8px">${escapeHTML(c.anchor_quote||'')}</div>
       `;
       list.appendChild(card);
     }
@@ -901,14 +893,14 @@
   // ---------- Highlights & QC ----------
   function renderHighlights(h){
     const el = $('#highlightsList'); el.innerHTML='';
-    if(!Array.isArray(h) || !h.length){ el.innerHTML = '<div class=\"muted\">No highlights</div>'; return; }
+    if(!Array.isArray(h) || !h.length){ el.innerHTML = '<div class="muted">No highlights</div>'; return; }
     for(const hi of h){
       const d = document.createElement('div'); d.className='panel'; d.style.background='#0e1533';
       d.innerHTML = `
-        <div class=\"row\" style=\"flex-wrap:wrap; gap:8px\">
-          <span class=\"badge\">Item</span> <code>${escapeHTML(hi.item_id||'')}</code>
+        <div class="row" style="flex-wrap:wrap; gap:8px">
+          <span class="badge">Item</span> <code>${escapeHTML(hi.item_id||'')}</code>
         </div>
-        <div style=\"margin-top:6px\">${escapeHTML(hi.why_notable||'')}</div>
+        <div style="margin-top:6px">${escapeHTML(hi.why_notable||'')}</div>
       `;
       el.appendChild(d);
     }
@@ -916,10 +908,10 @@
 
   function renderQC(qc){
     const el = $('#qcPanel'); el.innerHTML='';
-    if(!qc){ el.innerHTML = '<div class=\"muted\">No QC data</div>'; return; }
+    if(!qc){ el.innerHTML = '<div class="muted">No QC data</div>'; return; }
     const json = JSON.stringify(qc, null, 2);
     const d = document.createElement('div');
-    d.innerHTML = `<pre class=\"quote\" style=\"max-height:60vh; overflow:auto\">${escapeHTML(json)}</pre>`;
+    d.innerHTML = `<pre class="quote" style="max-height:60vh; overflow:auto">${escapeHTML(json)}</pre>`;
     el.appendChild(d);
   }
 
@@ -928,7 +920,7 @@
     const el = $('#termSheet'); if(!el) return;
     function add(label, value){
       const card = document.createElement('div'); card.className = 'term';
-      card.innerHTML = `<b>${escapeHTML(label)}</b><div class=\"v\">${value? escapeHTML(value): '<span class=\"muted\">—</span>'}</div>`;
+      card.innerHTML = `<b>${escapeHTML(label)}</b><div class="v">${value? escapeHTML(value): '<span class="muted">—</span>'}</div>`;
       el.appendChild(card);
     }
     el.innerHTML='';
@@ -957,23 +949,23 @@
       const T = L.terms || {};
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class=\"row\" style=\"gap:8px; align-items:center\">
-              <button class=\"btn small\" data-goto=\"${L.id}\">Open</button>
+        <td><div class="row" style="gap:8px; align-items:center">
+              <button class="btn small" data-goto="${L.id}">Open</button>
               <div>${escapeHTML(L.doc.title_guess || L.name || L.id)}</div>
             </div>
-            <div class=\"muted\">${escapeHTML(L.doc.source_name || '')}</div>
+            <div class="muted">${escapeHTML(L.doc.source_name || '')}</div>
         </td>
         <td>${escapeHTML(T.borrower || '')}</td>
         <td>${escapeHTML(T.lender || '')}</td>
-        <td class=\"nowrap\">${escapeHTML(T.facility_amount || '')}</td>
+        <td class="nowrap">${escapeHTML(T.facility_amount || '')}</td>
         <td>${escapeHTML(T.interest_rate || '')}</td>
-        <td class=\"num\">${escapeHTML(T.io_months || '')}</td>
-        <td class=\"num\">${escapeHTML(T.amort_months || '')}</td>
-        <td class=\"nowrap\">${escapeHTML(T.maturity_date || '')}</td>
+        <td class="num">${escapeHTML(T.io_months || '')}</td>
+        <td class="num">${escapeHTML(T.amort_months || '')}</td>
+        <td class="nowrap">${escapeHTML(T.maturity_date || '')}</td>
         <td>${escapeHTML(T.dscr || '')}</td>
         <td>${escapeHTML(T.ltv || '')}</td>
-        <td class=\"num\">${L.meta?.bespoke ?? ''}</td>
-        <td class=\"num\">${L.meta?.itemsCount ?? ''}</td>`;
+        <td class="num">${L.meta?.bespoke ?? ''}</td>
+        <td class="num">${L.meta?.itemsCount ?? ''}</td>`;
       tbody.appendChild(tr);
     }
     // Activate row open buttons
