@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loan Agreement JSON Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b1020;        /* deep navy */
+      --panel:#121832;     /* panel bg */
+      --muted:#8fa2c9;     /* muted text */
+      --text:#e8eeff;      /* main text */
+      --accent:#6aa6ff;    /* blue */
+      --accent-2:#8fda8b;  /* green */
+      --danger:#ff6a6a;    /* red */
+      --warn:#ffcc66;      /* yellow */
+      --chip:#1e254a;      /* chip bg */
+      --border:#1b2242;    /* borders */
+      --shadow:0 6px 18px rgba(0,0,0,.35);
+    }
+    html,body{height:100%}
+    *{box-sizing:border-box}
+    body{
+      margin:0; font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:linear-gradient(180deg, #0b1020 0%, #0b1020 55%, #0f1732 100%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:1000; backdrop-filter: blur(8px);
+      background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1320px; margin:0 auto; padding:14px 18px}
+    .row{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+    h1{font-size:18px; margin:0; letter-spacing:.3px}
+    h2{font-size:16px; margin:14px 0 8px}
+    h3{font-size:14px; margin:12px 0 6px; color:var(--muted)}
+    .muted{color:var(--muted)}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:var(--chip); border:1px solid var(--border)}
+    .btn{appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--text); padding:8px 12px; border-radius:10px; cursor:pointer; box-shadow:var(--shadow); transition:.15s ease; font-weight:600}
+    .btn:hover{transform:translateY(-1px); border-color:#2a376c}
+    .btn.primary{background:linear-gradient(180deg, #2a4aad, #243e9a); border-color:#2a4aad}
+    .btn.ghost{background:transparent}
+    .btn.small{padding:6px 9px; font-weight:600}
+    input[type="file"]{display:none}
+    .file-label{cursor:pointer}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+
+    main{display:grid; grid-template-columns: 280px 1fr; gap:18px; max-width:1320px; margin:22px auto; padding:0 18px}
+    aside{background:var(--panel); padding:14px; border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); position:sticky; top:80px; height:fit-content}
+    .panel{background:var(--panel); padding:14px; border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow)}
+    .grid{display:grid; gap:12px}
+    .kv{display:grid; grid-template-columns: 140px 1fr; gap:8px; align-items:center}
+    .kv .k{color:var(--muted)}
+
+    .tabs{display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:10px}
+    .tab{padding:10px 12px; cursor:pointer; border:1px solid var(--border); border-bottom:none; border-radius:12px 12px 0 0; background:#101737}
+    .tab.active{background:linear-gradient(180deg, #182253, #141d46)}
+
+    .filters{display:grid; gap:10px}
+    select, input[type="text"], textarea{
+      width:100%; background:#0e1533; border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:10px; outline:none
+    }
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#0e1533; color:var(--muted)}
+    .badge.ok{color:#9fe39a; border-color:#365936}
+    .badge.bp{color:#ffd57a; border-color:#6a5523}
+    .badge.bespoke{color:#a1d8ff; border-color:#294a73}
+
+    table{width:100%; border-collapse:collapse}
+    thead th{position:sticky; top:0; background:#0f1737; z-index:1}
+    th, td{padding:10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top}
+    tbody tr:hover{background:#0d1533}
+
+    details{border:1px solid var(--border); border-radius:12px; padding:10px; background:#0e1533}
+    details > summary{cursor:pointer; font-weight:700}
+
+    .quote{font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; background:#0b1331; border:1px dashed #1f2750; padding:8px 10px; border-radius:8px; display:block; white-space:pre-wrap}
+    .rowgap{display:flex; flex-wrap:wrap; gap:8px}
+
+    .footer{padding:20px; text-align:center; color:var(--muted)}
+
+    .dropzone{border:2px dashed #2b3b7a; padding:14px; border-radius:12px; text-align:center; background:#0e1533}
+    .dropzone.drag{background:#122050; border-color:#4d6fff}
+
+    .hidden{display:none}
+    .right{margin-left:auto}
+    .count{opacity:.8}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap row">
+      <h1>Loan Agreement JSON Dashboard</h1>
+      <span class="pill muted">Single-file • works offline</span>
+      <div class="toolbar right">
+        <label class="btn file-label" title="Open JSON file">
+          <input id="fileInput" type="file" accept="application/json,.json" />
+          📂 Load JSON
+        </label>
+        <button class="btn" id="pasteBtn" title="Paste raw JSON">📋 Paste JSON</button>
+        <button class="btn ghost" id="exportCsvBtn" disabled>⬇️ Export Items CSV</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <div class="dropzone" id="dropzone">
+        <strong>Drop your JSON here</strong>
+        <div class="muted" style="margin-top:6px">…or use the buttons above</div>
+      </div>
+      <h2>Filters</h2>
+      <div class="filters">
+        <label>
+          <div class="muted">Search</div>
+          <input type="text" id="searchInput" placeholder="Title, summary, quotes, variables…" />
+        </label>
+        <label>
+          <div class="muted">Category</div>
+          <select id="categorySelect" multiple size="6"></select>
+        </label>
+        <label>
+          <div class="muted">Tags</div>
+          <select id="tagsSelect" multiple size="6"></select>
+        </label>
+        <label class="row" style="align-items:center">
+          <input type="checkbox" id="bespokeOnly" />
+          <span>Only <span class="badge bespoke">bespoke</span></span>
+        </label>
+        <label class="row" style="align-items:center">
+          <input type="checkbox" id="boilerplateOnly" />
+          <span>Only <span class="badge bp">boilerplate</span></span>
+        </label>
+        <label>
+          <div class="muted">Min citations</div>
+          <input type="text" id="minCites" value="1" />
+        </label>
+        <div class="row">
+          <button class="btn small" id="resetFilters">Reset</button>
+        </div>
+      </div>
+      <h2>Loaded</h2>
+      <div class="grid" id="loadedMeta">
+        <div class="kv"><div class="k">Source</div><div id="metaSource" class="pill">—</div></div>
+        <div class="kv"><div class="k">Pages</div><div id="metaPages">—</div></div>
+        <div class="kv"><div class="k">Parties</div><div id="metaParties">—</div></div>
+        <div class="kv"><div class="k">Items</div><div id="metaItems">—</div></div>
+        <div class="kv"><div class="k">Chunks</div><div id="metaChunks">—</div></div>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <nav class="tabs" id="tabs">
+        <div class="tab active" data-tab="overview">Overview</div>
+        <div class="tab" data-tab="items">Items <span class="count" id="itemsCount"></span></div>
+        <div class="tab" data-tab="chunks">Chunks</div>
+        <div class="tab" data-tab="highlights">Highlights</div>
+        <div class="tab" data-tab="qc">QC</div>
+        <div class="tab" data-tab="raw">Raw JSON</div>
+      </nav>
+
+      <div id="view-overview" class="grid">
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap:12px">
+          <div class="panel" style="background:#0e1533">
+            <h3>Document</h3>
+            <div class="kv">
+              <div class="k">Source</div><div id="docSource">—</div>
+              <div class="k">Title</div><div id="docTitle">—</div>
+              <div class="k">Effective</div><div id="docEff">—</div>
+              <div class="k">Law</div><div id="docLaw">—</div>
+              <div class="k">Pages</div><div id="docPages">—</div>
+            </div>
+          </div>
+          <div class="panel" style="background:#0e1533">
+            <h3>At a glance</h3>
+            <div class="kv">
+              <div class="k">Total items</div><div id="ovItems">—</div>
+              <div class="k">Bespoke</div><div id="ovBespoke">—</div>
+              <div class="k">Boilerplate</div><div id="ovBoiler">—</div>
+              <div class="k">Calculations</div><div id="ovCalcs">—</div>
+            </div>
+          </div>
+          <div class="panel" style="background:#0e1533">
+            <h3>Parties</h3>
+            <div id="docParties" class="chips"></div>
+          </div>
+        </div>
+        <div class="panel" style="background:#0e1533">
+          <h3>Top Categories</h3>
+          <div id="topCats" class="chips"></div>
+        </div>
+      </div>
+
+      <div id="view-items" class="hidden">
+        <div class="row" style="margin-bottom:10px">
+          <div class="muted">Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> items</div>
+          <div class="right row" style="gap:6px">
+            <label class="row" style="align-items:center; gap:6px;">
+              <span class="muted">Per page</span>
+              <select id="perPage">
+                <option>20</option>
+                <option selected>50</option>
+                <option>100</option>
+              </select>
+            </label>
+            <button class="btn small" id="prevPage">◀</button>
+            <span id="pageInfo" class="pill">—</span>
+            <button class="btn small" id="nextPage">▶</button>
+          </div>
+        </div>
+        <div style="overflow:auto; max-height:65vh; border:1px solid var(--border); border-radius:12px">
+          <table id="itemsTable">
+            <thead>
+              <tr>
+                <th style="min-width:120px">ID</th>
+                <th style="min-width:160px">Category</th>
+                <th style="min-width:260px">Title</th>
+                <th>Bespoke?</th>
+                <th style="min-width:180px">Tags</th>
+                <th style="min-width:180px">Normalization</th>
+                <th>Citations</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-chunks" class="hidden">
+        <div id="chunksList" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));"></div>
+      </div>
+
+      <div id="view-highlights" class="hidden">
+        <div id="highlightsList" class="grid"></div>
+      </div>
+
+      <div id="view-qc" class="hidden">
+        <div id="qcPanel" class="grid"></div>
+      </div>
+
+      <div id="view-raw" class="hidden">
+        <details open>
+          <summary>Raw JSON</summary>
+          <textarea id="rawJson" style="height:48vh; width:100%; font-family: ui-monospace, Menlo, Consolas, monospace"></textarea>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">
+    Built for your structured loan-agreement extractor • No external libraries • Paste or drop your JSON above
+  </div>
+
+  <!-- Paste JSON modal -->
+  <dialog id="pasteDialog" style="max-width: 800px; width: calc(100% - 40px); border:1px solid var(--border); border-radius:16px; background:var(--panel); color:var(--text)">
+    <form method="dialog">
+      <h3>Paste JSON</h3>
+      <textarea id="pasteArea" placeholder="Paste JSON here" style="width:100%; height:45vh; background:#0e1533; color:var(--text); border:1px solid var(--border); border-radius:10px"></textarea>
+      <div class="row" style="margin-top:10px; justify-content:flex-end">
+        <button class="btn ghost" value="cancel">Cancel</button>
+        <button class="btn primary" id="pasteLoad" value="confirm">Load</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+  // ---------- Utilities ----------
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+  const escapeHTML = (s) => (s==null?"":String(s))
+    .replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+  const pretty = (v) => escapeHTML(typeof v==='object' ? JSON.stringify(v, null, 2) : (v ?? ''));
+
+  function download(filename, text){
+    const a = document.createElement('a');
+    a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    a.setAttribute('download', filename);
+    a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  function toCSV(rows){
+    const esc = (v)=> '"' + String(v ?? '').replace(/"/g,'""') + '"';
+    return rows.map(r=> r.map(esc).join(',')).join('\n');
+  }
+
+  const CATEGORY_ENUM = [
+    "Definition","MonetaryTerm","InterestRate","Amortization","InterestOnly",
+    "Prepayment","Fee","ReserveEscrow",
+    "FinancialCovenant","AffirmativeCovenant","NegativeCovenant","InformationCovenant",
+    "Reporting","Calculation","EventOfDefault","Remedy",
+    "Guaranty","Collateral","TransferAssignment","TaxGrossUp",
+    "Insurance","Indemnity","WaiverConsent","Notice","LegalProvision","Other"
+  ];
+  const TAG_ENUM = [
+    "Term","Covenant","Penalty","Requirement","Calculation","Fee","EventOfDefault","Remedy","Restriction","Threshold","Basket","CarveOut","Trigger","Cure","Timing","Rate","Amount","Date","Party","Collateral","Reporting"
+  ];
+
+  // ---------- State ----------
+  let RAW = null;            // original JSON
+  let ITEMS = [];            // flattened items for filtering/render
+  let FILTER = {
+    q:"", cats:new Set(), tags:new Set(), bespokeOnly:false, boilerOnly:false, minCites:1
+  };
+  let PAGINATION = {page:1, per:50, filtered:[]};
+
+  // ---------- Loaders ----------
+  $('#fileInput').addEventListener('change', (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=> loadJSON(reader.result);
+    reader.readAsText(f);
+  });
+
+  const pasteDialog = $('#pasteDialog');
+  $('#pasteBtn').onclick = ()=> pasteDialog.showModal();
+  $('#pasteLoad').onclick = (ev)=>{
+    ev.preventDefault();
+    try{ loadJSON($('#pasteArea').value); pasteDialog.close(); }
+    catch(err){ alert('Invalid JSON: '+ err.message); }
+  };
+
+  const dropzone = $('#dropzone');
+  ;['dragenter','dragover'].forEach(evt=> dropzone.addEventListener(evt, (e)=>{ e.preventDefault(); dropzone.classList.add('drag'); }));
+  ;['dragleave','drop'].forEach(evt=> dropzone.addEventListener(evt, (e)=>{ e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', (e)=>{
+    const f = e.dataTransfer.files?.[0]; if(!f) return;
+    const reader = new FileReader(); reader.onload = ()=> loadJSON(reader.result); reader.readAsText(f);
+  });
+
+  function loadJSON(text){
+    try{ RAW = JSON.parse(text); }
+    catch(err){ throw new Error('JSON parse error'); }
+    $('#rawJson').value = JSON.stringify(RAW, null, 2);
+    hydrate();
+  }
+
+  // ---------- Hydration ----------
+  function hydrate(){
+    // Document meta
+    const doc = RAW?.document ?? {};
+    $('#docSource').innerHTML = `<span class="pill">${escapeHTML(doc.source_name ?? '—')}</span>`;
+    $('#docTitle').textContent = doc.title_guess || '—';
+    $('#docEff').textContent = doc.effective_date_iso || '—';
+    $('#docLaw').textContent = doc.governing_law || '—';
+    $('#docPages').textContent = doc.page_count ?? '—';
+
+    $('#metaSource').textContent = doc.source_name || '—';
+    $('#metaPages').textContent = doc.page_count ?? '—';
+
+    const parties = Array.isArray(doc.parties) ? doc.parties : [];
+    $('#metaParties').textContent = parties.length;
+    const chips = parties.map(p=> `<span class="chip">${escapeHTML(p.role || 'Role')} — <strong>${escapeHTML(p.name || '?')}</strong></span>`).join(' ');
+    $('#docParties').innerHTML = chips || '<span class="muted">—</span>';
+
+    // Chunks
+    const chunks = Array.isArray(RAW?.chunks) ? RAW.chunks : [];
+    $('#metaChunks').textContent = chunks.length;
+    renderChunks(chunks);
+
+    // Items
+    ITEMS = Array.isArray(RAW?.items) ? RAW.items.map(x=> normalizeItem(x)) : [];
+    $('#metaItems').textContent = ITEMS.length;
+
+    // Overview quick stats
+    $('#ovItems').textContent = ITEMS.length;
+    $('#ovBespoke').textContent = ITEMS.filter(i=> i.classification?.boilerplate_status==='bespoke').length;
+    $('#ovBoiler').textContent = ITEMS.filter(i=> i.classification?.boilerplate_status==='boilerplate').length;
+    $('#ovCalcs').textContent = ITEMS.filter(i=> i.category==='Calculation').length;
+
+    // Filters: categories & tags
+    buildMultiSelect($('#categorySelect'), CATEGORY_ENUM, getDistinct(ITEMS.map(i=> i.category)));
+    buildMultiSelect($('#tagsSelect'), TAG_ENUM, getDistinct(ITEMS.flatMap(i=> Array.isArray(i.tags)? i.tags: [])));
+
+    // Highlights & QC
+    renderHighlights(Array.isArray(RAW?.highlights) ? RAW.highlights : []);
+    renderQC(RAW?.qc);
+
+    // Items table
+    applyFilters();
+    $('#exportCsvBtn').disabled = ITEMS.length===0;
+    updateItemsCount();
+  }
+
+  function normalizeItem(i){
+    const cites = Array.isArray(i.citations) ? i.citations : [];
+    return {
+      ...i,
+      title: i.title || '(untitled)',
+      _citesCount: cites.length,
+      _tags: Array.isArray(i.tags) ? i.tags : [],
+      _norm: i.normalization || {},
+      _summary: i.summary || '',
+    };
+  }
+
+  function buildMultiSelect(el, enumVals, usedVals){
+    el.innerHTML = '';
+    const values = enumVals.filter(v=> usedVals.has(v));
+    if(values.length===0){ el.innerHTML = '<option disabled>(none)</option>'; return; }
+    values.forEach(v=>{
+      const opt = document.createElement('option'); opt.value = v; opt.textContent = v; el.appendChild(opt);
+    });
+  }
+
+  function getDistinct(arr){ return new Set(arr.filter(Boolean)); }
+
+  // ---------- Filters & pagination ----------
+  $('#searchInput').addEventListener('input', (e)=>{ FILTER.q = e.target.value.trim().toLowerCase(); PAGINATION.page=1; applyFilters(); });
+  $('#categorySelect').addEventListener('change', (e)=>{ FILTER.cats = new Set(Array.from(e.target.selectedOptions).map(o=>o.value)); PAGINATION.page=1; applyFilters(); });
+  $('#tagsSelect').addEventListener('change', (e)=>{ FILTER.tags = new Set(Array.from(e.target.selectedOptions).map(o=>o.value)); PAGINATION.page=1; applyFilters(); });
+  $('#bespokeOnly').addEventListener('change', (e)=>{ FILTER.bespokeOnly = e.target.checked; if(FILTER.bespokeOnly) { $('#boilerplateOnly').checked=false; FILTER.boilerOnly=false; } PAGINATION.page=1; applyFilters(); });
+  $('#boilerplateOnly').addEventListener('change', (e)=>{ FILTER.boilerOnly = e.target.checked; if(FILTER.boilerOnly) { $('#bespokeOnly').checked=false; FILTER.bespokeOnly=false; } PAGINATION.page=1; applyFilters(); });
+  $('#minCites').addEventListener('input', (e)=>{ const v = parseInt(e.target.value||'1',10); FILTER.minCites = isNaN(v)?1:Math.max(0,v); PAGINATION.page=1; applyFilters(); });
+  $('#resetFilters').onclick = ()=>{
+    FILTER = {q:"", cats:new Set(), tags:new Set(), bespokeOnly:false, boilerOnly:false, minCites:1};
+    $('#searchInput').value=''; $('#categorySelect').selectedIndex=-1; $('#tagsSelect').selectedIndex=-1; $('#bespokeOnly').checked=false; $('#boilerplateOnly').checked=false; $('#minCites').value='1'; PAGINATION.page=1; applyFilters();
+  };
+
+  $('#perPage').addEventListener('change', (e)=>{ PAGINATION.per = parseInt(e.target.value,10); PAGINATION.page=1; renderItems(); });
+  $('#prevPage').onclick = ()=>{ if(PAGINATION.page>1){ PAGINATION.page--; renderItems(); } };
+  $('#nextPage').onclick = ()=>{ const max = Math.max(1, Math.ceil(PAGINATION.filtered.length / PAGINATION.per)); if(PAGINATION.page < max){ PAGINATION.page++; renderItems(); } };
+
+  function applyFilters(){
+    const q = FILTER.q;
+    const cats = FILTER.cats; const tags = FILTER.tags;
+    const bespokeOnly = FILTER.bespokeOnly; const boilerOnly = FILTER.boilerOnly;
+    const minC = FILTER.minCites;
+    PAGINATION.filtered = ITEMS.filter(i=>{
+      if(minC>0 && (i._citesCount||0) < minC) return false;
+      if(cats.size && !cats.has(i.category)) return false;
+      if(tags.size && !i._tags.some(t=> tags.has(t))) return false;
+      const status = i.classification?.boilerplate_status;
+      if(bespokeOnly && status!=="bespoke") return false;
+      if(boilerOnly && status!=="boilerplate") return false;
+      if(q){
+        const hay = [i.id,i.title,i._summary,status, (i.classification?.rationale||''), ...i._tags, JSON.stringify(i.substance||{}), JSON.stringify(i.calculation_detail||{}), JSON.stringify(i.citations||[]) ].join(' ').toLowerCase();
+        if(!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    renderItems();
+  }
+
+  function updateItemsCount(){
+    $('#itemsCount').textContent = ITEMS.length ? `(${ITEMS.length})` : '';
+  }
+
+  function renderItems(){
+    const tbody = $('#itemsTable tbody'); tbody.innerHTML='';
+    const total = PAGINATION.filtered.length; $('#totalCount').textContent = ITEMS.length; $('#showingCount').textContent = total;
+    const maxPage = Math.max(1, Math.ceil(total / PAGINATION.per));
+    $('#pageInfo').textContent = `Page ${PAGINATION.page} / ${maxPage}`;
+
+    const start = (PAGINATION.page - 1) * PAGINATION.per;
+    const pageItems = PAGINATION.filtered.slice(start, start + PAGINATION.per);
+
+    for(const i of pageItems){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${escapeHTML(i.id||'')}</code></td>
+        <td><span class="badge">${escapeHTML(i.category||'')}</span></td>
+        <td>${escapeHTML(i.title||'')}</td>
+        <td>${renderStatus(i.classification)}</td>
+        <td>${(i._tags||[]).map(t=>`<span class="chip">${escapeHTML(t)}</span>`).join(' ')}</td>
+        <td>${renderNorm(i._norm)}</td>
+        <td>${i._citesCount ?? 0}</td>
+        <td>
+          <button class="btn small" data-act="expand">Details</button>
+          <button class="btn small ghost" data-act="copy">Copy JSON</button>
+        </td>`;
+
+      // Expandable row
+      const tr2 = document.createElement('tr');
+      const td = document.createElement('td'); td.colSpan = 8; td.className='hidden';
+      td.innerHTML = renderItemDetail(i);
+      tr2.appendChild(td);
+
+      tr.addEventListener('click', (ev)=>{
+        const act = ev.target?.dataset?.act;
+        if(act==='copy'){
+          navigator.clipboard.writeText(JSON.stringify(i, null, 2));
+          ev.stopPropagation();
+          return;
+        }
+        if(act==='expand'){
+          td.classList.toggle('hidden');
+          ev.stopPropagation();
+        }
+      });
+
+      tbody.appendChild(tr); tbody.appendChild(tr2);
+    }
+  }
+
+  function renderStatus(cls){
+    const st = cls?.boilerplate_status; const rationale = escapeHTML(cls?.rationale || '');
+    if(st==='bespoke') return `<span class="badge bespoke">bespoke</span>`;
+    if(st==='boilerplate') return `<span class="badge bp">boilerplate</span>`;
+    if(st==='unsure') return `<span class="badge">unsure</span>`;
+    return `<span class="badge">—</span>`;
+  }
+
+  function renderNorm(n){
+    if(!n) return '—';
+    const bits = [];
+    if(n.amount_number!=null) bits.push(`Amt: <strong>${n.amount_number}</strong> ${n.amount_currency||''}`);
+    if(n.percent_decimal!=null) bits.push(`Pct: <strong>${n.percent_decimal}</strong>${n.rate_basis? ' ('+escapeHTML(n.rate_basis)+')':''}`);
+    if(n.date_iso) bits.push(`Date: ${escapeHTML(n.date_iso)}`);
+    if(n.duration_months!=null) bits.push(`Dur: ${n.duration_months} mo`);
+    if(n.frequency) bits.push(`Freq: ${escapeHTML(n.frequency)}`);
+    if(n.comparator) bits.push(`Cmp: ${escapeHTML(n.comparator)}`);
+    if(n.threshold_value!=null) bits.push(`Th: ${n.threshold_value} ${n.units||''}`);
+    return bits.length? bits.join('<br/>') : '—';
+  }
+
+  function renderCitations(cites){
+    if(!Array.isArray(cites) || !cites.length) return '<span class="muted">(no citations)</span>';
+    return cites.map(c=>{
+      const p = `p.${c.page_start}${c.page_end && c.page_end!==c.page_start ? '–'+c.page_end:''}`;
+      return `<details>
+        <summary><span class="badge">${escapeHTML(p)}</span> ${c.chunk_id? `<code>${escapeHTML(c.chunk_id)}</code>`:''}</summary>
+        <div class="quote">${escapeHTML(c.verbatim_quote||'')}</div>
+      </details>`;
+    }).join('');
+  }
+
+  function renderItemDetail(i){
+    const cls = i.classification || {}; const norm = i._norm || {};
+    const sub = i.substance || {}; const calc = i.calculation_detail || {};
+    return `
+      <div class="grid" style="gap:12px">
+        <div class="rowgap">
+          <span class="badge">${escapeHTML(i.category||'')}</span>
+          ${renderStatus(cls)}
+          ${(i._tags||[]).map(t=> `<span class="chip">${escapeHTML(t)}</span>`).join(' ')}
+        </div>
+        ${i._summary? `<div><h3>Summary</h3><div>${escapeHTML(i._summary)}</div></div>`:''}
+        <div class="grid" style="grid-template-columns: repeat(3,1fr); gap:12px">
+          <div>
+            <h3>Classification</h3>
+            <div>status: <strong>${escapeHTML(cls.boilerplate_status||'—')}</strong></div>
+            <div class="muted">${escapeHTML(cls.rationale||'')}</div>
+          </div>
+          <div>
+            <h3>Normalization</h3>
+            <div>${renderNorm(norm)}</div>
+          </div>
+          <div>
+            <h3>Parties</h3>
+            <div>${Array.isArray(sub.parties_involved)? sub.parties_involved.map(p=>`<span class="chip">${escapeHTML(p)}</span>`).join(' ') : '<span class="muted">—</span>'}</div>
+          </div>
+        </div>
+        ${renderTest(sub)}
+        ${renderCalc(calc)}
+        <div>
+          <h3>Citations (${i._citesCount||0})</h3>
+          ${renderCitations(i.citations)}
+        </div>
+      </div>`;
+  }
+
+  function renderTest(sub){
+    const t = sub?.test_details; if(!t) return '';
+    const vars = Array.isArray(t.variables)? t.variables: [];
+    return `<div>
+      <h3>Test / Formula</h3>
+      <div><strong>Formula</strong>: <code>${escapeHTML(t.formula_infix||'')}</code></div>
+      <div class="grid" style="grid-template-columns: repeat(2,1fr); gap:10px; margin-top:6px">
+        <div>
+          <h3>Variables</h3>
+          ${vars.length? vars.map(v=> `<div class="chip">${escapeHTML(v.name)}${v.definition? ' — '+escapeHTML(v.definition):''}${v.units? ' ['+escapeHTML(v.units)+']':''}</div>`).join(' ') : '<span class="muted">—</span>'}
+        </div>
+        <div>
+          <h3>Threshold</h3>
+          <div>${t.comparator? escapeHTML(t.comparator)+' ':''}${t.threshold ?? ''}</div>
+          <div class="muted">Testing: ${escapeHTML(t.testing_frequency||'—')}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderCalc(calc){
+    if(!calc || (!calc.name && !calc.formula_infix && !Array.isArray(calc.variables))) return '';
+    const vars = Array.isArray(calc.variables)? calc.variables: [];
+    const w = calc.worked_example || {};
+    return `<div>
+      <h3>Calculation Detail</h3>
+      <div><strong>${escapeHTML(calc.name||'')}</strong></div>
+      ${calc.formula_infix? `<div>Formula: <code>${escapeHTML(calc.formula_infix)}</code></div>`:''}
+      <div style="margin-top:6px"><strong>Variables</strong>: ${vars.length? vars.map(v=> `<span class="chip">${escapeHTML(v.name)}${v.definition? ' — '+escapeHTML(v.definition):''}${v.units? ' ['+escapeHTML(v.units)+']':''}${(v.example_value!=null)? ' = '+escapeHTML(v.example_value):''}</span>`).join(' ') : '<span class="muted">—</span>'}</div>
+      ${Object.keys(w).length? `<details style="margin-top:8px"><summary>Worked Example</summary><pre class="quote">${escapeHTML(JSON.stringify(w, null, 2))}</pre></details>`:''}
+    </div>`;
+  }
+
+  // ---------- Chunks ----------
+  function renderChunks(chunks){
+    const list = $('#chunksList'); list.innerHTML='';
+    if(!Array.isArray(chunks) || !chunks.length){ list.innerHTML = '<div class="muted">No chunks</div>'; return; }
+    for(const c of chunks){
+      const card = document.createElement('div'); card.className='panel'; card.style.background='#0e1533';
+      card.innerHTML = `
+        <div class="rowgap">
+          <span class="badge">${escapeHTML(c.chunk_id||'')}</span>
+          <span class="chip">${escapeHTML(c.title||'')}</span>
+          <span class="pill">p.${escapeHTML(c.page_start)}–${escapeHTML(c.page_end)}</span>
+        </div>
+        <div class="muted" style="margin-top:6px">${Array.isArray(c.heading_path)? c.heading_path.map(h=> `<span class="chip">${escapeHTML(h)}</span>`).join(' ') : ''}</div>
+        <div class="quote" style="margin-top:8px">${escapeHTML(c.anchor_quote||'')}</div>
+      `;
+      list.appendChild(card);
+    }
+  }
+
+  // ---------- Highlights & QC ----------
+  function renderHighlights(h){
+    const el = $('#highlightsList'); el.innerHTML='';
+    if(!Array.isArray(h) || !h.length){ el.innerHTML = '<div class="muted">No highlights</div>'; return; }
+    for(const hi of h){
+      const d = document.createElement('div'); d.className='panel'; d.style.background='#0e1533';
+      d.innerHTML = `
+        <div class="rowgap">
+          <span class="badge">Item</span> <code>${escapeHTML(hi.item_id||'')}</code>
+        </div>
+        <div style="margin-top:6px">${escapeHTML(hi.why_notable||'')}</div>
+      `;
+      el.appendChild(d);
+    }
+  }
+
+  function renderQC(qc){
+    const el = $('#qcPanel'); el.innerHTML='';
+    if(!qc){ el.innerHTML = '<div class="muted">No QC data</div>'; return; }
+    // Render simple key/value view for arbitrary QC objects
+    const json = JSON.stringify(qc, null, 2);
+    const d = document.createElement('div');
+    d.innerHTML = `<pre class="quote" style="max-height:60vh; overflow:auto">${escapeHTML(json)}</pre>`;
+    el.appendChild(d);
+  }
+
+  // ---------- Tabs ----------
+  $$('#tabs .tab').forEach(t=> t.addEventListener('click', ()=>{
+    $$('#tabs .tab').forEach(x=> x.classList.remove('active'));
+    t.classList.add('active');
+    const name = t.dataset.tab;
+    ;['overview','items','chunks','highlights','qc','raw'].forEach(id=> {
+      const v = $('#view-'+id); if(v) v.classList.toggle('hidden', id!==name);
+    });
+  }));
+
+  // ---------- Export CSV ----------
+  $('#exportCsvBtn').onclick = ()=>{
+    if(!PAGINATION.filtered.length){ alert('No items to export.'); return; }
+    const rows = [[
+      'id','category','title','boilerplate_status','rationale','tags','amount_number','amount_currency','percent_decimal','rate_basis','date_iso','duration_months','frequency','comparator','threshold_value','units','citations_count'
+    ]];
+    for(const i of PAGINATION.filtered){
+      const n = i._norm || {};
+      rows.push([
+        i.id, i.category, i.title, i.classification?.boilerplate_status||'', i.classification?.rationale||'', (i._tags||[]).join('|'), n.amount_number??'', n.amount_currency??'', n.percent_decimal??'', n.rate_basis??'', n.date_iso??'', n.duration_months??'', n.frequency??'', n.comparator??'', n.threshold_value??'', n.units??'', i._citesCount??0
+      ]);
+    }
+    const csv = toCSV(rows);
+    download('loan_items.csv', csv);
+  };
+
+  // Auto-load from URL hash if provided (expects data: URL-encoded JSON)
+  (function(){
+    const h = decodeURIComponent(location.hash.slice(1)||'');
+    if(h.startsWith('{') && h.endsWith('}')){ try{ loadJSON(h); }catch(e){} }
+  })();
+
+  </script>
+</body>
+</html>
